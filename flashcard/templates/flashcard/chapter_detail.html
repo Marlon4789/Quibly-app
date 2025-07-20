@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block content %}
+  <h2>{{ chapter.title }} ({{ pos }}/{{ total }})</h2>
+  {% if card %}
+    <div class="card mb-3">
+      {% if card.image_url %}
+        <img src="{{ card.image_url }}" class="card-img-top">
+      {% endif %}
+      <div class="card-body">
+        <h5>{{ card.word_english }}</h5>
+        <p>{{ card.word_spanish }}</p>
+        {% if card.content %}<small>{{ card.content }}</small>{% endif %}
+      </div>
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+      <div class="mb-3">
+        {{ form.mark_as.label_tag }} {{ form.mark_as }}
+      </div>
+
+      <button type="submit" name="action" value="prev" class="btn btn-secondary"
+              {% if pos <= 1 %}disabled{% endif %}>
+        Anterior
+      </button>
+      <button type="submit" name="action" value="next" class="btn btn-primary">
+        Siguiente
+      </button>
+    </form>
+  {% else %}
+    <div class="alert alert-info">
+      <p>Has completado todas las tarjetas.</p>
+      <a href="{% url 'chapter_list' %}" class="btn btn-primary mt-2">Volver a capítulos</a>
+    </div>
+  {% endif %}
+{% endblock %}

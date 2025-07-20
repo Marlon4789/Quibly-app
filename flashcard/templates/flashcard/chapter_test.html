@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block content %}
+  <h2>Test: {{ chapter.title }}</h2>
+
+  {% if passed is not none %}
+    {% if passed %}
+      <div class="alert alert-success">
+        ¡Felicidades! Aprobaste con {{ correct }}/{{ total }} aciertos.
+      </div>
+    {% else %}
+      <div class="alert alert-warning">
+        Obtuviste {{ correct }}/{{ total }} aciertos. Intenta de nuevo.
+      </div>
+    {% endif %}
+    <a href="{% url 'chapter_list' %}" class="btn btn-primary mt-3">
+      Volver a Capítulos
+    </a>
+  {% else %}
+    <form method="post">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit" class="btn btn-success">Enviar respuestas</button>
+    </form>
+  {% endif %}
+
+{% endblock %}
