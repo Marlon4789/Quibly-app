@@ -93,62 +93,7 @@ class ChapterDetailView(DetailView, FormView):
         pos = self.request.session.get(pos_key, 0)
         # si llegamos al final, si show_test redirige al test; si no, a lista
         if pos >= len(self.cards):
-            if self.object.show_test and self.object.test:
-                return reverse('chapter_test', args=[self.object.slug])
             return reverse('chapter_list')
         return reverse('chapter_detail', args=[self.object.slug])
 
 
-class ChapterTestView(DetailView, FormView):
-    model               = Chapter
-    template_name       = 'flashcard/chapter_test.html'
-    form_class          = forms.Form  # o tu clase dinámica, da igual
-    context_object_name = 'chapter'
-
-    def dispatch(self, request, *args, **kwargs):
-        # Aseguramos que self.object esté definido
-        self.object = self.get_object()
-        # Si el test no está configurado o no está habilitado, lo llevamos de vuelta
-        if not self.object.show_test or not self.object.test:
-            return redirect('chapter_detail', slug=self.object.slug)
-        return super().dispatch(request, *args, **kwargs)
-
-    def get_form_class(self):
-        questions = self.object.test.questions.all()[: self.object.test.num_questions]
-        fields = {}
-        for i, card in enumerate(questions, start=1):
-            fld = forms.CharField(
-                label=f"What is the correct answer to the meaning of '{card.mean_english}'?",
-                max_length=200
-            )
-            fld.correct_answer = card.word_english  # Guardamos la respuesta correcta
-            fields[f'q{i}'] = fld
-        return type('DynamicTestForm', (forms.Form,), fields)
-
-    def get_form(self, form_class=None):
-        FormCls = self.get_form_class()
-        return FormCls(**self.get_form_kwargs())
-
-    def form_valid(self, form):
-        questions = self.object.test.questions.all()[: self.object.test.num_questions]
-        correct = 0
-        for i, card in enumerate(questions, start=1):
-            resp = form.cleaned_data.get(f'q{i}', '').strip().lower()
-            if resp == card.word_english.strip().lower():
-                correct += 1
-        passed = (correct == len(questions))
-        return self.render_to_response(self.get_context_data(
-            passed=passed,
-            correct=correct,
-            total=len(questions)
-        ))
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        # usamos self.object (ya cargado en dispatch) y los flags que pasamos
-        ctx.update({
-            'passed':  kwargs.get('passed'),
-            'correct': kwargs.get('correct', 0),
-            'total':   kwargs.get('total', 0),
-        })
-        return ctx

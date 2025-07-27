@@ -10,12 +10,6 @@ class Chapter(models.Model):
     slug        = models.SlugField(unique=True, blank=True)
     # Permite elegir libremente un conjunto de flashcards en cada capítulo
     cards       = models.ManyToManyField('Flashcard', related_name='chapters', blank=True)
-    # Relación opcional con un test específico
-    # Esto permite que un capítulo esté asociado a un test, pero no es obligatorio
-    # Si no se especifica, el capítulo no tendrá un test asociado
-    test = models.ForeignKey('testapp.Test', on_delete=models.SET_NULL, related_name='chapters', blank=True, null=True)
-    #Si queremos que este capítulo tenga un test final
-    show_test   = models.BooleanField(default=False)
 
     class Meta:
         ordering = ['title']

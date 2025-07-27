@@ -10,13 +10,8 @@ class ChapterAdmin(admin.ModelAdmin):
     list_display = (
         'title',
         'slug',
-        'show_test',
-        'test',
     )
-    list_filter = (
-        'show_test',
-        'test',
-    )
+   
     search_fields = (
         'title',
         'slug',
@@ -34,10 +29,7 @@ class ChapterAdmin(admin.ModelAdmin):
         ('Tarjetas del capítulo', {
             'fields': ('cards',),
         }),
-        ('Test final', {
-            'fields': ('show_test', 'test'),
-            'description': 'Configura si este capítulo incluye un test y cuál usar.',
-        }),
+            
     )
 
 
