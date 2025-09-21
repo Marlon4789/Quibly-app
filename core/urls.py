@@ -22,6 +22,10 @@ from django.urls import path, include
 urlpatterns = [
      path('admin/', admin.site.urls),
     path('', include('flashcard.urls')),
+    # login urls
+    path('login/', include('login.urls')),
+    # Google allauth urls
+    path('accounts/', include('allauth.urls')),
 ]
 
 if settings.DEBUG:

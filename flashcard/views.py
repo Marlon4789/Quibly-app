@@ -1,11 +1,13 @@
 # flashcard/views.py
 
 from django import forms
-from django.shortcuts import redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.views.generic import ListView, DetailView, FormView
-
+from django.views.generic import ListView, DetailView, FormView, TemplateView
 from .models import Chapter, Flashcard
+
+def home(request):
+    return render(request, "flashcard/home.html")
 
 
 class ChapterListView(ListView):
@@ -32,17 +34,12 @@ class StudyForm(forms.Form):
 
 
 class ChapterDetailView(DetailView, FormView):
-    """
-    Muestra las flashcards de un capítulo, permite navegación anterior/siguiente
-    y marca cada tarjeta como vista.
-    """
     model = Chapter
     template_name = 'flashcard/chapter_detail.html'
     form_class = StudyForm
     context_object_name = 'chapter'
 
     def dispatch(self, request, *args, **kwargs):
-        # cargar el capítulo
         self.object = self.get_object()
         pos_key = f'pos_{self.object.pk}'
         restart = request.GET.get('restart') == '1'
@@ -59,11 +56,24 @@ class ChapterDetailView(DetailView, FormView):
         ctx = super().get_context_data(**kwargs)
         pos_key = f'pos_{self.object.pk}'
         pos = self.request.session.get(pos_key, 0)
-        if pos < len(self.cards):
+        total = len(self.cards)
+        if pos < total:
             ctx.update({
                 'card': self.cards[pos],
                 'pos': pos + 1,
-                'total': len(self.cards),
+                'total': total,
+                # sugerencia: pasar progress_percent calculado aquí
+                'progress_percent': round(((pos + 1) / total) * 100) if total else 0,
+                'form': ctx.get('form') or self.get_form(),
+            })
+        else:
+            # Si pos >= total, enviamos contexto vacío (la vista de "finished" se mostrará vía redirect)
+            ctx.update({
+                'card': None,
+                'pos': total,
+                'total': total,
+                'progress_percent': 100,
+                'form': ctx.get('form') or self.get_form(),
             })
         return ctx
 
@@ -78,22 +88,63 @@ class ChapterDetailView(DetailView, FormView):
             self.request.session[pos_key] = new_pos
             return redirect('chapter_detail', slug=self.object.slug)
 
-        # marcar la tarjeta actual
+        # marcar la tarjeta actual (si existe)
         if pos < len(self.cards):
             card = self.cards[pos]
             card.viewed = True
-            card.mark_as = form.cleaned_data['mark_as']
+            # si tu formulario tiene mark_as, guárdalo (si no lo tienes, omitir)
+            if 'mark_as' in form.cleaned_data:
+                card.mark_as = form.cleaned_data.get('mark_as', card.mark_as)
             card.save()
+            # avanzamos la posición
             self.request.session[pos_key] = pos + 1
 
+        # Al dejar que super().form_valid() maneje la redirección, get_success_url decidirá a dónde ir
         return super().form_valid(form)
 
     def get_success_url(self):
         pos_key = f'pos_{self.object.pk}'
         pos = self.request.session.get(pos_key, 0)
-        # si llegamos al final, si show_test redirige al test; si no, a lista
-        if pos >= len(self.cards):
-            return reverse('chapter_list')
-        return reverse('chapter_detail', args=[self.object.slug])
+        total = len(self.cards)
+        if pos >= total:
+            # Cuando terminamos, vamos a la vista dedicada de "finished"
+            return reverse('chapter_finished', args=[self.object.slug])
+        # si no, volvemos a la misma vista para mostrar la siguiente tarjeta (usamos ?pos por claridad)
+        return f"{reverse('chapter_detail', args=[self.object.slug])}?pos={pos + 1}"
+
+
+class ChapterFinishedView(TemplateView):
+    template_name = 'flashcard/chapter_finished.html'
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        slug = self.kwargs.get('slug')
+        chapter = get_object_or_404(Chapter, slug=slug)
+        total = chapter.cards.count()
+        # estadísticas útiles: cuántas marcaron como learned/review
+        learned = chapter.cards.filter(mark_as='learned').count()
+        review = chapter.cards.filter(mark_as='review').count()
+        ctx.update({
+            'chapter': chapter,
+            'total': total,
+            'learned': learned,
+            'review': review,
+        })
+        return ctx
+
+def chapter_restart(request, slug):
+    """
+    Reinicia el capítulo: marca todas las flashcards relacionadas como no vistas (viewed=False)
+    y redirige al capítulo con restart=1 para comenzar desde la primera tarjeta.
+    """
+    chapter = get_object_or_404(Chapter, slug=slug)
+    # marcar todas como no vistas (reset)
+    chapter.cards.update(viewed=False)
+    # (opcional) resetear mark_as si quieres: chapter.cards.update(mark_as='review')
+    # resetear la posición en la sesión también
+    pos_key = f'pos_{chapter.pk}'
+    request.session[pos_key] = 0
+    request.session['current_chapter'] = chapter.slug
+    return redirect(f"{reverse('chapter_detail', args=[chapter.slug])}?restart=1")
 
 

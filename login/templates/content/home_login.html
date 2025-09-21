@@ -1,0 +1,25 @@
+{% extends 'layouts/base_login.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card mt-5 border border-success">
+                <div class="card-body">
+                    <h5 class="card-title display-6">Hola, es un gusto tenerte por estos lados.</h5>
+                    <p class="card-text">
+                        Te quería contar que este es un demo de un sistema de inicio de sesión con restablecimiento de contraseña mediante Email. Puedes ir a tu perfil para ver tu información, iniciar sesión o crear una cuenta nueva.
+                    </p>
+                </div>
+                <div class="col-12 text-center my-3">
+                    {% if request.user.is_authenticated %}
+                        <a class="btn btn-success" href="{% url 'profile' %}">Comenzar</a>
+                    {% else %}
+                        <a class="btn btn-success" href="{% url 'login' %}">Iniciar sesión</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

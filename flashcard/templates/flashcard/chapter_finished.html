@@ -1,0 +1,39 @@
+{% extends 'layouts/base_login.html' %}
+{% block content %}
+<div class="container py-2">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+
+      <div class="card text-center shadow-lg rounded-4">
+        <div class="card-body p-3">
+          <div>
+            <img style="width: 7rem;" src="https://cerulean-attention-6af.notion.site/image/attachment%3A1c3ad5a0-af66-4c29-869b-cc8d496df2a4%3AZorro_triunfante_y_sonriente.png?table=block&id=274ec6c6-fce0-8020-91ff-c746bc7f021e&spaceId=1924e68b-692f-46fc-bf0e-923678684a30&width=670&userId=&cache=v2" class="img-fluid rounded-start" alt="...">
+          </div>
+
+          <h3 class="card-title mb-2">¡Has finalizado!</h3>
+          <p class="text-muted mb-3">Has completado el capítulo <strong>"{{ chapter.title }}".</strong><br>
+            Total tarjetas: <strong>{{ total }}</strong></p>
+
+          <div class="mb-3">
+            <p class="small text-muted mb-1">Resumen</p>
+            <div class="d-flex justify-content-center gap-3">
+              <span class="badge bg-success">Learned: {{ learned }}</span>
+              <span class="badge bg-warning text-dark">Review: {{ review }}</span>
+            </div>
+          </div>
+
+          <div class="d-grid gap-2 d-sm-flex justify-content-sm-center mt-4">
+            <a href="{% url 'chapter_restart' chapter.slug %}" class="btn btn-outline-success btn-lg">Repetir</a>
+            <a href="{% url 'chapter_list' %}" class="btn btn-success btn-lg">Finalizar</a>
+          </div>
+
+          <div class="mt-3">
+            <a href="{% url 'chapter_detail' chapter.slug %}?restart=1" class="small text-muted">Volver a la primera tarjeta sin reiniciar flags</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

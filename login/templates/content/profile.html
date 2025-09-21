@@ -1,0 +1,36 @@
+{% extends 'layouts/base_login.html' %}
+
+{% block content %}
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-8 col-lg-5 col-xxl-4 mx-auto">
+
+            <h5 class="display-6 text-center my-5">¡Bienvenido a tu perfil!</h5>
+           
+            <div class="card mx-auto border border-success">
+                <i class="fa-solid fa-circle-user mx-auto my-3" style="font-size: 80px;"></i>
+                <div class="card-body">
+                  {% if request.user.is_authenticated %}
+                  <p class="card-text">{{ user.username | title }}</p>
+                  <p class="card-text">{{ user.email }}</p>
+                  {% endif %}
+                </div>
+            </div>
+
+            <div class="text-center mt-4">
+                <a class="btn btn-success d-grid" href="{% url 'home_login' %}">Ver home</a>
+            </div>
+            <div class="text-center mt-3">
+                <a class="btn btn-warning d-grid" href="{% url 'password_reset' %}">Cambiar contraseña</a>
+            </div>
+            <div class="text-center my-4">
+                <a class="btn btn-danger d-grid" href="{% url 'delete_account' %}">Eliminar cuenta</a>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}

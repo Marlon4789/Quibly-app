@@ -1,36 +1,149 @@
-{% extends 'base.html' %}
+{% extends 'layouts/base_login.html' %}
+
 {% block content %}
-  <h2>{{ chapter.title }} ({{ pos }}/{{ total }})</h2>
-  {% if card %}
-    <div class="card mb-3">
-      {% if card.image_url %}
-        <img src="{{ card.image_url }}" class="card-img-top">
-      {% endif %}
-      <div class="card-body">
-        <h5>{{ card.word_english }}</h5>
-        <p>{{ card.word_spanish }}</p>
-        {% if card.content %}<small>{{ card.content }}</small>{% endif %}
-      </div>
-    </div>
+<div class="container py-1">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-10 col-lg-8">
 
-    <form method="post">
-      {% csrf_token %}
-      <div class="mb-3">
-        {{ form.mark_as.label_tag }} {{ form.mark_as }}
+      <!-- Barra de progreso visual (usa progress_percent desde la view) -->
+      <div class="my-2">
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <small class="text-muted">Progreso: {{ pos }} de {{ total }}</small>
+        </div>
+        
       </div>
 
-      <button type="submit" name="action" value="prev" class="btn btn-secondary"
-              {% if pos <= 1 %}disabled{% endif %}>
-        Anterior
-      </button>
-      <button type="submit" name="action" value="next" class="btn btn-primary">
-        Siguiente
-      </button>
-    </form>
-  {% else %}
-    <div class="alert alert-info">
-      <p>Has completado todas las tarjetas.</p>
-      <a href="{% url 'chapter_list' %}" class="btn btn-primary mt-2">Volver a capítulos</a>
+      <!-- Header: título del capítulo y progreso (encabezado pequeño) -->
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <div>
+          <h2 class="h5 mb-0">{{ chapter.title }}</h2>
+        </div>
+        <div class="text-end">
+          <span class="badge bg-success small">{{ card.get_category_display }}</span>
+        </div>
+      </div>
+
+      <!-- Card principal -->
+      <div class="card shadow-lg flashcard-card rounded-3 overflow-hidden">
+        {# IMAGEN: arriba, 100% ancho, object-fit cover para verse bien en mobile/desktop #}
+        {% if card.image_url %}
+          <div style="width:100%; height:500px; max-height:50vh; overflow:hidden;">
+            <img src="{{ card.image_url }}" alt="{{ card.word_english }}" class="w-100 h-100" style="object-fit:cover; display:block;">
+          </div>
+        {% else %}
+          <div class="d-flex align-items-center justify-content-center w-100" style="height:280px; background: linear-gradient(135deg,#f8fafc,#eef2ff);">
+            <div class="text-center px-3">
+              <svg xmlns="http://www.w3.org/2000/svg" width="72" height="72" fill="currentColor" class="bi bi-card-image mb-2 text-secondary" viewBox="0 0 16 16">
+                <path d="M14 4.5V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V2c0-.55.45-1 1-1h7.5A1.5 1.5 0 0 1 11 2.5V4h3z"/>
+                <path d="M10.648 8.646a.5.5 0 0 1 .704-.056l2.5 2a.5.5 0 0 1 .008.744L11.5 14H3a1 1 0 0 1-1-1v-.5l3-3 2 2 3.648-2.854z"/>
+              </svg>
+              <div class="h6 mb-0 text-muted">No image</div>
+              <small class="text-muted">Añade una imagen para hacerlo más visual</small>
+            </div>
+          </div>
+        {% endif %}
+
+        <div class="card-body d-flex flex-column gap-3">
+
+          <!-- Palabra, traducción e IPA (si existe) -->
+          <div>
+            <h3 class="fw-bold mt-2">{{ card.word_english }}</h3>
+            {% if card.ipa_english %}
+              <small class="text-muted">/ {{ card.ipa_english }} /</small>
+            {% endif %}
+            <p class="mb-1 text-muted fs-6 my-3">{{ card.word_spanish }}</p>
+          </div>
+
+          <!-- Mean (English) - destacado -->
+          <div>
+            <div class="p-3 bg-white rounded-3 border">
+              <h6 class="mb-1 text-secondary small">Mean (English)</h6>
+              <p class="mb-0 fs-6">{{ card.mean_english }}</p>
+            </div>
+          </div>
+
+          <!-- Desplegable con mean_espanish, ipa_english y content -->
+          <div>
+            <button class="btn btn-outline-secondary btn-sm w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#detailsCollapse" aria-expanded="false" aria-controls="detailsCollapse">
+            More details <span class="float-end">▼</span>
+            </button>
+            <div class="collapse mt-2" id="detailsCollapse">
+              <div class="card card-body bg-light">
+                <h6 class="small text-secondary mb-1">Mean (Español)</h6>
+                <p class="mb-2">{{ card.mean_espanish }}</p>
+
+                <h6 class="small text-secondary mb-1">Explanation</h6>
+                <p class="mb-0">{{ card.content|linebreaksbr|default:"—" }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Marcar y navegación alineados (siempre abajo) -->
+          <div class="mt-2 mt-md-3">
+            <form method="post" class="row g-2 align-items-center" id="navForm">
+              {% csrf_token %}
+              <input type="hidden" name="action" id="actionField" value="">
+              <input type="hidden" name="pos" value="{{ pos }}">
+
+              <div class="col-12 col-md-6">
+                <label for="id_mark_as" class="form-label small text-secondary mb-1">Marcar como</label>
+                {{ form.mark_as }}
+              </div> 
+
+              <div class="col-12 col-md-6 d-flex gap-2 justify-content-md-end">
+                <button type="submit" class="btn btn-outline-secondary w-100" id="prevBtn" name="action" value="prev" {% if pos <= 1 %}disabled{% endif %}>
+                  Anterior
+                </button>
+                <button type="submit" class="btn btn-primary w-100" id="nextBtn" name="action" value="next">
+                  Siguiente
+                </button>
+              </div>
+            </form>
+          </div>
+
+        </div> <!-- fin card-body -->
+      </div> <!-- fin card -->
+
+      
+
     </div>
-  {% endif %}
+  </div>
+</div>
+
+{% block extra_js %}
+<script>
+  (function(){
+    // Atajos ← y → para navegar
+    document.addEventListener('keydown', function(e){
+      const left = 37, right = 39;
+      if (e.keyCode === left || e.key === 'ArrowLeft') {
+        const prevBtn = document.getElementById('prevBtn');
+        if (prevBtn && !prevBtn.disabled) {
+          document.getElementById('actionField').value = 'prev';
+          document.getElementById('navForm').submit();
+        }
+      } else if (e.keyCode === right || e.key === 'ArrowRight') {
+        document.getElementById('actionField').value = 'next';
+        document.getElementById('navForm').submit();
+      }
+    });
+
+    // Cambiar icono del botón desplegable cuando collapse cambie
+    const detailsBtn = document.querySelector('[data-bs-target="#detailsCollapse"]');
+    const detailsCollapse = document.getElementById('detailsCollapse');
+    if (detailsBtn && detailsCollapse) {
+      detailsCollapse.addEventListener('shown.bs.collapse', function () {
+        detailsBtn.querySelector('span').textContent = '▲';
+      });
+      detailsCollapse.addEventListener('hidden.bs.collapse', function () {
+        detailsBtn.querySelector('span').textContent = '▼';
+      });
+    }
+
+    // Focus en siguiente al hacer click (accesibilidad)
+    const nextBtn = document.getElementById('nextBtn');
+    if (nextBtn) nextBtn.addEventListener('click', function(){ this.focus(); });
+  })();
+</script>
+{% endblock %}
 {% endblock %}

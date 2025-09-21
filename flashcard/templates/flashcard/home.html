@@ -1,0 +1,21 @@
+{% extends 'layouts/base_login.html' %}
+{% block content %}
+<div class="container py-2">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+
+        <div class="card">
+            <div class="card-header">
+                 <h1>Bienvenido a Quibly 📚</h1>
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">Special title treatment</h5>
+                <p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
+                <a href="{% url 'chapter_list' %}" class="btn btn-primary">Go somewhere</a>
+            </div>
+        </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
